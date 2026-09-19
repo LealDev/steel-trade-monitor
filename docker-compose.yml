@@ -1,0 +1,24 @@
+# Ambiente de desenvolvimento local — espelha a VPS (Postgres 17, banco steel)
+# Subir:  docker compose up -d
+# Parar:  docker compose stop
+# Zerar o banco (apaga os dados): docker compose down -v
+services:
+  db:
+    image: postgres:17
+    container_name: steel-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: steel
+      POSTGRES_PASSWORD: steel
+      POSTGRES_DB: steel
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U steel"]
+      interval: 10s
+      retries: 5
+
+volumes:
+  pgdata:
