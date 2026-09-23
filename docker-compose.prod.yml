@@ -1,0 +1,45 @@
+# Produção (VPS): banco + API + web num único compose.
+# Segredos vêm do .env (copie .env.example e preencha — o .env não vai pro git).
+#   Subir:      docker compose -f docker-compose.prod.yml up -d --build
+#   Logs:       docker compose -f docker-compose.prod.yml logs -f api
+#   Atualizar:  git pull && docker compose -f docker-compose.prod.yml up -d --build
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: steel
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina no .env}
+      POSTGRES_DB: steel
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U steel"]
+      interval: 10s
+      retries: 5
+    # sem ports: o banco só existe na rede interna do compose
+
+  api:
+    build: ./Backend/steel-trade-api
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/steel
+      SPRING_DATASOURCE_USERNAME: steel
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      # job da janela móvel ligado em produção (3h da manhã UTC)
+      COMEXSTAT_AGENDAMENTOHABILITADO: "true"
+      APP_INGESTION_TOKEN: ${INGESTION_TOKEN:?defina no .env}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./Frontend/steel-trade-monitor-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
