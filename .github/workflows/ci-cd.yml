@@ -1,0 +1,83 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (testes)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Backend/steel-trade-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      # Testcontainers usa o Docker do próprio runner
+      - name: Testes (unitários + integração)
+        run: ./mvnw --batch-mode test
+
+  frontend:
+    name: Frontend (testes + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Frontend/steel-trade-monitor-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Frontend/steel-trade-monitor-web/package-lock.json
+      - run: npm ci
+      - name: Testes
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+      - name: Build de produção
+        run: npx ng build
+
+  deploy:
+    name: Deploy (Contabo)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Frontend/steel-trade-monitor-web/package-lock.json
+
+      - name: Build do frontend
+        working-directory: Frontend/steel-trade-monitor-web
+        run: npm ci && npx ng build
+
+      - name: Configurar SSH (chave dedicada + host key fixado)
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.CONTABO_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "167.86.66.58 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH9x3WL0UFhEN/lCXkJ6101S2btwdiwPbeMEJPYYmoYP" >> ~/.ssh/known_hosts
+
+      - name: Deploy do backend (rsync + rebuild na VPS)
+        run: |
+          rsync -a --delete Backend/steel-trade-api/ emanuel@167.86.66.58:/opt/stack/apps/steel-trade/api/
+          ssh emanuel@167.86.66.58 "cd /opt/stack && docker compose up -d --build steel-api"
+
+      - name: Deploy do frontend (estáticos para o Caddy)
+        run: rsync -a --delete Frontend/steel-trade-monitor-web/dist/steel-trade-monitor-web/browser/ emanuel@167.86.66.58:/opt/stack/caddy/site/steel/
+
+      - name: Health check
+        run: |
+          sleep 25
+          curl -fsS http://167.86.66.58/api/actuator/health
+          curl -fsS -o /dev/null http://167.86.66.58/
+          echo "deploy saudável"
