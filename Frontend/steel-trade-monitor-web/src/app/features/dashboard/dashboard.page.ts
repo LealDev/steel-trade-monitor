@@ -1,12 +1,14 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 
 import { SourceFreshness } from '../../core/models/source-freshness.model';
 import { TimeSeriesPoint } from '../../core/models/time-series-point.model';
 import { DataFreshnessService } from '../../core/services/data-freshness.service';
 import { TradeAnalyticsService } from '../../core/services/trade-analytics.service';
 import { FreshnessBadge } from '../../shared/components/freshness-badge/freshness-badge';
+import { KpiCard } from '../../shared/components/kpi-card/kpi-card';
 import { TradeVolumeChart } from './components/trade-volume-chart/trade-volume-chart';
+import { resumirSerie } from './dashboard.metrics';
 
 interface HealthResponse {
   status: string;
@@ -16,7 +18,7 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [TradeVolumeChart, FreshnessBadge],
+  imports: [TradeVolumeChart, FreshnessBadge, KpiCard],
   template: `
     <section class="dashboard">
       <header class="dashboard__header">
@@ -63,6 +65,31 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
           </div>
         }
         @case ('pronto') {
+          @if (resumo(); as r) {
+            <div class="dashboard__kpis">
+              <app-kpi-card
+                label="Preço médio do período"
+                [value]="usdPorTonelada(r.precoMedioPeriodoUsdPorTonelada)"
+                hint="FOB ÷ toneladas"
+              />
+              <app-kpi-card
+                [label]="'Preço em ' + r.ultimoPeriodo"
+                [value]="usdPorTonelada(r.precoUltimoMesUsdPorTonelada)"
+                [trendPercent]="r.variacaoPrecoPercentual"
+                hint="vs mês anterior"
+              />
+              <app-kpi-card
+                label="Volume exportado"
+                [value]="toneladas(r.volumeTotalToneladas)"
+                [hint]="periodoHint()"
+              />
+              <app-kpi-card
+                label="Valor FOB"
+                [value]="usd(r.valorTotalFobUsd)"
+                [hint]="periodoHint()"
+              />
+            </div>
+          }
           <app-trade-volume-chart [points]="serie()" />
         }
       }
@@ -81,6 +108,12 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
       gap: 0.5rem;
       flex-wrap: wrap;
       margin-bottom: 0.75rem;
+    }
+    .dashboard__kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
     }
     .status {
       font-weight: 600;
@@ -117,6 +150,13 @@ export class DashboardPage {
   readonly serie = signal<TimeSeriesPoint[]>([]);
   readonly estadoSerie = signal<EstadoSerie>('carregando');
   readonly fontes = signal<SourceFreshness[]>([]);
+  readonly resumo = computed(() => resumirSerie(this.serie()));
+
+  private readonly formatoCompacto = new Intl.NumberFormat('pt-BR', {
+    notation: 'compact',
+    maximumFractionDigits: 2,
+  });
+  private readonly formatoInteiro = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 
   constructor() {
     this.http.get<HealthResponse>('/api/actuator/health').subscribe({
@@ -136,5 +176,22 @@ export class DashboardPage {
       },
       error: () => this.estadoSerie.set('erro'),
     });
+  }
+
+  usdPorTonelada(valor: number): string {
+    return `US$ ${this.formatoInteiro.format(valor)}/t`;
+  }
+
+  toneladas(valor: number): string {
+    return `${this.formatoCompacto.format(valor)} t`;
+  }
+
+  usd(valor: number): string {
+    return `US$ ${this.formatoCompacto.format(valor)}`;
+  }
+
+  periodoHint(): string {
+    const meses = this.serie().length;
+    return meses === 1 ? 'em 1 mês' : `em ${meses} meses`;
   }
 }
