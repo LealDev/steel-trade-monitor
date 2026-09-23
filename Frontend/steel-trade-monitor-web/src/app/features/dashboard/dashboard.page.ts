@@ -8,7 +8,7 @@ import { TradeAnalyticsService } from '../../core/services/trade-analytics.servi
 import { FreshnessBadge } from '../../shared/components/freshness-badge/freshness-badge';
 import { KpiCard } from '../../shared/components/kpi-card/kpi-card';
 import { TradeVolumeChart } from './components/trade-volume-chart/trade-volume-chart';
-import { resumirSerie } from './dashboard.metrics';
+import { resumirSerie, rotuloPeriodo } from './dashboard.metrics';
 
 interface HealthResponse {
   status: string;
@@ -22,7 +22,12 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
   template: `
     <section class="dashboard">
       <header class="dashboard__header">
-        <h2>Exportações de ferro e aço (capítulo 72 NCM)</h2>
+        <h2>
+          Exportações de ferro e aço (capítulo 72 NCM)
+          @if (periodoExibido()) {
+            <span class="dashboard__periodo">Período: {{ periodoExibido() }}</span>
+          }
+        </h2>
         <p>
           Backend:
           @if (backendStatus() === null) {
@@ -102,6 +107,20 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
     .dashboard__header h2 {
       margin: 0 0 0.25rem;
       font-size: 1.15rem;
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .dashboard__periodo {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #4b5563;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 999px;
+      padding: 0.15rem 0.6rem;
+      white-space: nowrap;
     }
     .dashboard__badges {
       display: flex;
@@ -151,6 +170,7 @@ export class DashboardPage {
   readonly estadoSerie = signal<EstadoSerie>('carregando');
   readonly fontes = signal<SourceFreshness[]>([]);
   readonly resumo = computed(() => resumirSerie(this.serie()));
+  readonly periodoExibido = computed(() => rotuloPeriodo(this.serie()));
 
   private readonly formatoCompacto = new Intl.NumberFormat('pt-BR', {
     notation: 'compact',

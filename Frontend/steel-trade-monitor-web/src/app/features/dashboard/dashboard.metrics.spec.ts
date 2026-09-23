@@ -1,4 +1,4 @@
-import { resumirSerie } from './dashboard.metrics';
+import { formatarPeriodo, resumirSerie, rotuloPeriodo } from './dashboard.metrics';
 import { TimeSeriesPoint } from '../../core/models/time-series-point.model';
 
 describe('resumirSerie', () => {
@@ -36,5 +36,28 @@ describe('resumirSerie', () => {
   it('série vazia ou sem volume devolve null', () => {
     expect(resumirSerie([])).toBeNull();
     expect(resumirSerie([{ period: '2025-06', kgLiquido: 0, valorFobUsd: 10 }])).toBeNull();
+  });
+});
+
+describe('rotuloPeriodo', () => {
+  it('formata o intervalo entre o primeiro e o último mês da série', () => {
+    expect(
+      rotuloPeriodo([
+        { period: '2025-01', kgLiquido: 1, valorFobUsd: 1 },
+        { period: '2025-06', kgLiquido: 1, valorFobUsd: 1 },
+      ]),
+    ).toBe('jan/2025 – jun/2025');
+  });
+
+  it('mês único aparece sem intervalo', () => {
+    expect(rotuloPeriodo([{ period: '2025-12', kgLiquido: 1, valorFobUsd: 1 }])).toBe('dez/2025');
+  });
+
+  it('série vazia devolve null', () => {
+    expect(rotuloPeriodo([])).toBeNull();
+  });
+
+  it('formata um período isolado', () => {
+    expect(formatarPeriodo('2026-02')).toBe('fev/2026');
   });
 });
