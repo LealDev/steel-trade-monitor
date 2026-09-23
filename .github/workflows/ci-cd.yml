@@ -77,7 +77,14 @@ jobs:
 
       - name: Health check
         run: |
-          sleep 25
-          curl -fsS http://167.86.66.58/api/actuator/health
-          curl -fsS -o /dev/null http://167.86.66.58/
-          echo "deploy saudável"
+          # a API leva ~1 min para subir após o rebuild; tenta por até 2 min
+          for i in $(seq 1 24); do
+            if curl -fsS http://167.86.66.58/api/actuator/health; then
+              curl -fsS -o /dev/null http://167.86.66.58/
+              echo; echo "deploy saudável"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "API não respondeu em 2 minutos" >&2
+          exit 1
