@@ -1,4 +1,4 @@
-import { formatarPeriodo, resumirSerie, rotuloPeriodo } from './dashboard.metrics';
+import { formatarPeriodo, resumirSerie, rotuloPeriodo, serieDePreco } from './dashboard.metrics';
 import { TimeSeriesPoint } from '../../core/models/time-series-point.model';
 
 describe('resumirSerie', () => {
@@ -36,6 +36,24 @@ describe('resumirSerie', () => {
   it('série vazia ou sem volume devolve null', () => {
     expect(resumirSerie([])).toBeNull();
     expect(resumirSerie([{ period: '2025-06', kgLiquido: 0, valorFobUsd: 10 }])).toBeNull();
+  });
+});
+
+describe('serieDePreco', () => {
+  it('calcula o preço mensal em US$/t', () => {
+    const precos = serieDePreco([
+      { period: '2025-05', kgLiquido: 1_000_000, valorFobUsd: 500_000 },
+      { period: '2025-06', kgLiquido: 2_000_000, valorFobUsd: 1_600_000 },
+    ]);
+    expect(precos).toEqual([
+      { period: '2025-05', usdPorTonelada: 500 },
+      { period: '2025-06', usdPorTonelada: 800 },
+    ]);
+  });
+
+  it('omite meses sem volume', () => {
+    const precos = serieDePreco([{ period: '2025-06', kgLiquido: 0, valorFobUsd: 10 }]);
+    expect(precos).toEqual([]);
   });
 });
 

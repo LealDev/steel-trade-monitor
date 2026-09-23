@@ -8,6 +8,7 @@ import { TradeAnalyticsService } from '../../core/services/trade-analytics.servi
 import { FreshnessBadge } from '../../shared/components/freshness-badge/freshness-badge';
 import { KpiCard } from '../../shared/components/kpi-card/kpi-card';
 import { TradeVolumeChart } from './components/trade-volume-chart/trade-volume-chart';
+import { UnitPriceChart } from './components/unit-price-chart/unit-price-chart';
 import { resumirSerie, rotuloPeriodo } from './dashboard.metrics';
 
 interface HealthResponse {
@@ -18,7 +19,7 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [TradeVolumeChart, FreshnessBadge, KpiCard],
+  imports: [TradeVolumeChart, UnitPriceChart, FreshnessBadge, KpiCard],
   template: `
     <section class="dashboard">
       <header class="dashboard__header">
@@ -96,6 +97,7 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
             </div>
           }
           <app-trade-volume-chart [points]="serie()" />
+          <app-unit-price-chart [points]="serie()" />
         }
       }
     </section>

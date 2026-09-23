@@ -47,6 +47,22 @@ function precoPorTonelada(ponto: TimeSeriesPoint): number {
   return ponto.kgLiquido > 0 ? ponto.valorFobUsd / (ponto.kgLiquido / 1000) : 0;
 }
 
+/** Um ponto da série de preço médio: US$/t de cada mês. */
+export interface PontoPreco {
+  period: string;
+  usdPorTonelada: number;
+}
+
+/**
+ * Série mensal de preço médio (US$/t = FOB ÷ toneladas do mês).
+ * Meses sem volume são omitidos: preço sem quilos não existe.
+ */
+export function serieDePreco(pontos: TimeSeriesPoint[]): PontoPreco[] {
+  return pontos
+    .filter(p => p.kgLiquido > 0)
+    .map(p => ({ period: p.period, usdPorTonelada: precoPorTonelada(p) }));
+}
+
 const MESES_ABREVIADOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
 /** "2025-01" → "jan/2025". */
