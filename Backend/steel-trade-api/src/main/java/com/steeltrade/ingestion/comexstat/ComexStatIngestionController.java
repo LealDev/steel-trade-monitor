@@ -1,0 +1,48 @@
+package com.steeltrade.ingestion.comexstat;
+
+import com.steeltrade.ingestion.comexstat.dto.IngestionRunRequest;
+import com.steeltrade.ingestion.comexstat.dto.PipelineRunResponse;
+import com.steeltrade.ingestion.staging.StatusProcessamento;
+import com.steeltrade.warehouse.loader.TradeFactLoader;
+
+import jakarta.validation.Valid;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Disparo manual do pipeline Comex Stat: coleta → staging → fato.
+ * Em produção quem chama é o job agendado; esta rota existe para backfill
+ * e desenvolvimento.
+ */
+@RestController
+@RequestMapping("/v1/ingestion/comexstat")
+public class ComexStatIngestionController {
+
+    private final ComexStatIngestionService ingestionService;
+    private final TradeFactLoader tradeFactLoader;
+
+    public ComexStatIngestionController(ComexStatIngestionService ingestionService,
+                                        TradeFactLoader tradeFactLoader) {
+        this.ingestionService = ingestionService;
+        this.tradeFactLoader = tradeFactLoader;
+    }
+
+    @PostMapping("/runs")
+    public ResponseEntity<PipelineRunResponse> executar(@Valid @RequestBody IngestionRunRequest request) {
+        var coleta = ingestionService.coletarExportacoes(request.from(), request.to(), request.chapter());
+
+        var carga = coleta.status() == StatusProcessamento.PENDENTE
+                ? tradeFactLoader.processarPendentes()
+                : new TradeFactLoader.LoadResult(0, 0, 0);
+
+        var status = coleta.status() == StatusProcessamento.ERRO
+                ? HttpStatus.BAD_GATEWAY
+                : HttpStatus.CREATED;
+        return ResponseEntity.status(status).body(new PipelineRunResponse(coleta, carga));
+    }
+}
