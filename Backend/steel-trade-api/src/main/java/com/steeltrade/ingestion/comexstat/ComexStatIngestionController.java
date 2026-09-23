@@ -2,8 +2,8 @@ package com.steeltrade.ingestion.comexstat;
 
 import com.steeltrade.ingestion.comexstat.dto.IngestionRunRequest;
 import com.steeltrade.ingestion.comexstat.dto.PipelineRunResponse;
-import com.steeltrade.ingestion.staging.StatusProcessamento;
-import com.steeltrade.warehouse.loader.TradeFactLoader;
+import com.steeltrade.ingestion.core.IngestionRunner;
+import com.steeltrade.ingestion.core.StatusExecucao;
 
 import jakarta.validation.Valid;
 
@@ -23,26 +23,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/v1/ingestion/comexstat")
 public class ComexStatIngestionController {
 
-    private final ComexStatIngestionService ingestionService;
-    private final TradeFactLoader tradeFactLoader;
+    private final IngestionRunner ingestionRunner;
 
-    public ComexStatIngestionController(ComexStatIngestionService ingestionService,
-                                        TradeFactLoader tradeFactLoader) {
-        this.ingestionService = ingestionService;
-        this.tradeFactLoader = tradeFactLoader;
+    public ComexStatIngestionController(IngestionRunner ingestionRunner) {
+        this.ingestionRunner = ingestionRunner;
     }
 
     @PostMapping("/runs")
     public ResponseEntity<PipelineRunResponse> executar(@Valid @RequestBody IngestionRunRequest request) {
-        var coleta = ingestionService.coletarExportacoes(request.from(), request.to(), request.chapter());
-
-        var carga = coleta.status() == StatusProcessamento.PENDENTE
-                ? tradeFactLoader.processarPendentes()
-                : new TradeFactLoader.LoadResult(0, 0, 0);
-
-        var status = coleta.status() == StatusProcessamento.ERRO
+        var resultado = ingestionRunner.executarComexStat(request.from(), request.to(), request.chapter());
+        var status = resultado.statusExecucao() == StatusExecucao.FALHA
                 ? HttpStatus.BAD_GATEWAY
                 : HttpStatus.CREATED;
-        return ResponseEntity.status(status).body(new PipelineRunResponse(coleta, carga));
+        return ResponseEntity.status(status).body(resultado);
     }
 }

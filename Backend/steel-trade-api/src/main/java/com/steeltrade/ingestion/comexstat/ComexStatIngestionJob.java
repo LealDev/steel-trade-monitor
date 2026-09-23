@@ -3,9 +3,8 @@ package com.steeltrade.ingestion.comexstat;
 import java.time.Clock;
 import java.time.YearMonth;
 
-import com.steeltrade.ingestion.staging.StatusProcessamento;
+import com.steeltrade.ingestion.core.IngestionRunner;
 import com.steeltrade.shared.config.ComexStatProperties;
-import com.steeltrade.warehouse.loader.TradeFactLoader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,17 +25,14 @@ public class ComexStatIngestionJob {
 
     private static final Logger log = LoggerFactory.getLogger(ComexStatIngestionJob.class);
 
-    private final ComexStatIngestionService ingestionService;
-    private final TradeFactLoader tradeFactLoader;
+    private final IngestionRunner ingestionRunner;
     private final ComexStatProperties properties;
     private final Clock clock;
 
-    public ComexStatIngestionJob(ComexStatIngestionService ingestionService,
-                                 TradeFactLoader tradeFactLoader,
+    public ComexStatIngestionJob(IngestionRunner ingestionRunner,
                                  ComexStatProperties properties,
                                  Clock clock) {
-        this.ingestionService = ingestionService;
-        this.tradeFactLoader = tradeFactLoader;
+        this.ingestionRunner = ingestionRunner;
         this.properties = properties;
         this.clock = clock;
     }
@@ -46,10 +42,12 @@ public class ComexStatIngestionJob {
         YearMonth ate = YearMonth.now(clock);
         YearMonth de = ate.minusMonths(properties.mesesJanelaMovel() - 1L);
         log.info("evento=job_iniciado fonte=COMEXSTAT janela={}..{}", de, ate);
-
-        var coleta = ingestionService.coletarExportacoes(de, ate, CAPITULO_FERRO_ACO);
-        if (coleta.status() == StatusProcessamento.PENDENTE) {
-            tradeFactLoader.processarPendentes();
+        try {
+            ingestionRunner.executarComexStat(de, ate, CAPITULO_FERRO_ACO);
+        } catch (RuntimeException ex) {
+            // job agendado nunca propaga: a falha já ficou registrada em
+            // ctl_execucao_ingestao e a próxima janela tenta de novo
+            log.error("evento=job_falhou fonte=COMEXSTAT", ex);
         }
     }
 }

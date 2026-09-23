@@ -1,8 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 
+import { SourceFreshness } from '../../core/models/source-freshness.model';
 import { TimeSeriesPoint } from '../../core/models/time-series-point.model';
+import { DataFreshnessService } from '../../core/services/data-freshness.service';
 import { TradeAnalyticsService } from '../../core/services/trade-analytics.service';
+import { FreshnessBadge } from '../../shared/components/freshness-badge/freshness-badge';
 import { TradeVolumeChart } from './components/trade-volume-chart/trade-volume-chart';
 
 interface HealthResponse {
@@ -13,7 +16,7 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [TradeVolumeChart],
+  imports: [TradeVolumeChart, FreshnessBadge],
   template: `
     <section class="dashboard">
       <header class="dashboard__header">
@@ -28,6 +31,13 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
             <span class="status status--down">indisponível</span>
           }
         </p>
+        @if (fontes().length > 0) {
+          <div class="dashboard__badges">
+            @for (fonte of fontes(); track fonte.fonte) {
+              <app-freshness-badge [freshness]="fonte" />
+            }
+          </div>
+        }
       </header>
 
       @switch (estadoSerie()) {
@@ -66,6 +76,12 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
       margin: 0 0 0.25rem;
       font-size: 1.15rem;
     }
+    .dashboard__badges {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
     .status {
       font-weight: 600;
     }
@@ -95,15 +111,22 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
 export class DashboardPage {
   private readonly http = inject(HttpClient);
   private readonly tradeAnalytics = inject(TradeAnalyticsService);
+  private readonly dataFreshness = inject(DataFreshnessService);
 
   readonly backendStatus = signal<string | null>(null);
   readonly serie = signal<TimeSeriesPoint[]>([]);
   readonly estadoSerie = signal<EstadoSerie>('carregando');
+  readonly fontes = signal<SourceFreshness[]>([]);
 
   constructor() {
     this.http.get<HealthResponse>('/api/actuator/health').subscribe({
       next: health => this.backendStatus.set(health.status),
       error: () => this.backendStatus.set('DOWN'),
+    });
+
+    this.dataFreshness.getFreshness().subscribe({
+      next: fontes => this.fontes.set(fontes),
+      error: () => this.fontes.set([]),
     });
 
     this.tradeAnalytics.getTimeSeries({ flow: 'EXPORT', ncmChapter: 72 }).subscribe({

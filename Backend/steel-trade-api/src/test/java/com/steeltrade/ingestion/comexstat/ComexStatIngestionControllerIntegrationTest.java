@@ -48,6 +48,8 @@ class ComexStatIngestionControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"from\":\"2025-06\",\"to\":\"2025-06\",\"chapter\":72}"))
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.execucaoId").isNumber())
+                .andExpect(jsonPath("$.statusExecucao").value("SUCESSO"))
                 .andExpect(jsonPath("$.coleta.stagingId").isNumber())
                 .andExpect(jsonPath("$.coleta.statusHttp").value(200))
                 .andExpect(jsonPath("$.coleta.status").value("PENDENTE"))
@@ -94,6 +96,7 @@ class ComexStatIngestionControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"from\":\"2025-07\",\"to\":\"2025-07\",\"chapter\":72}"))
                 .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.statusExecucao").value("FALHA"))
                 .andExpect(jsonPath("$.coleta.status").value("ERRO"))
                 .andExpect(jsonPath("$.coleta.mensagemErro").value("Fonte respondeu HTTP 429"))
                 .andExpect(jsonPath("$.carga.registrosCarregados").value(0));

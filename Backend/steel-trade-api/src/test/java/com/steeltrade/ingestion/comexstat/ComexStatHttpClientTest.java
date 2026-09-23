@@ -1,10 +1,17 @@
 package com.steeltrade.ingestion.comexstat;
 
+import java.time.Duration;
 import java.time.YearMonth;
 
+import com.steeltrade.ingestion.comexstat.dto.ComexStatRawResponse;
 import com.steeltrade.shared.config.ComexStatProperties;
 import com.steeltrade.shared.config.HttpClientConfig;
 import com.steeltrade.shared.exception.ExternalSourceException;
+
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +19,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
@@ -28,16 +36,18 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 /**
- * Contrato do adaptador HTTP: formato do body, headers e comportamento
- * diante de erro — validados contra a API real em 2026-09.
+ * Contrato do adaptador HTTP: formato do body, headers e comportamento de
+ * retry/circuit breaker — o formato foi validado contra a API real em 2026-09.
+ * As proteções usam os mesmos predicados da produção, com esperas de 1ms.
  */
 class ComexStatHttpClientTest {
 
     private static final String BASE_URL = "https://comexstat.teste";
     private static final String URL_GENERAL = BASE_URL + "/general?language=pt";
+    private static final YearMonth JUNHO = YearMonth.of(2025, 6);
 
     private MockRestServiceServer servidor;
-    private ComexStatHttpClient client;
+    private RestClient restClient;
 
     @BeforeEach
     void configurar() {
@@ -47,7 +57,22 @@ class ComexStatHttpClientTest {
         // requestFactory pelo mock — a ordem inversa perderia o mock
         new HttpClientConfig().comexStatRestClient(builder, properties);
         servidor = MockRestServiceServer.bindTo(builder).build();
-        client = new ComexStatHttpClient(builder.build(), JsonMapper.builder().build());
+        restClient = builder.build();
+    }
+
+    private ComexStatHttpClient criarClient(int tentativas, CircuitBreaker circuitBreaker) {
+        var retryConfig = RetryConfig.<ComexStatRawResponse>custom()
+                .maxAttempts(tentativas)
+                .waitDuration(Duration.ofMillis(1))
+                .retryOnException(ex -> ex instanceof ExternalSourceException)
+                .retryOnResult(r -> r.statusHttp() == 429 || r.statusHttp() >= 500)
+                .build();
+        return new ComexStatHttpClient(restClient, JsonMapper.builder().build(),
+                Retry.of("teste", retryConfig), circuitBreaker);
+    }
+
+    private CircuitBreaker circuitoPermissivo() {
+        return CircuitBreaker.ofDefaults("teste-permissivo");
     }
 
     @Test
@@ -66,7 +91,8 @@ class ComexStatHttpClientTest {
                 .andExpect(jsonPath("$.metrics[0]").value("metricFOB"))
                 .andRespond(withSuccess("{\"data\":{\"list\":[]}}", MediaType.APPLICATION_JSON));
 
-        var resposta = client.buscarExportacoes(YearMonth.of(2025, 1), YearMonth.of(2025, 6), 72);
+        var client = criarClient(1, circuitoPermissivo());
+        var resposta = client.buscarExportacoes(YearMonth.of(2025, 1), JUNHO, 72);
 
         assertThat(resposta.sucesso()).isTrue();
         assertThat(resposta.statusHttp()).isEqualTo(200);
@@ -77,26 +103,70 @@ class ComexStatHttpClientTest {
     }
 
     @Test
-    void devolveRespostaDeErroInteiraSemLancarExcecao() {
+    void tentaDeNovoApos429EDevolveOSucesso() {
         servidor.expect(requestTo(URL_GENERAL))
                 .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body("{\"error\":{\"code\":429}}"));
+        servidor.expect(requestTo(URL_GENERAL))
+                .andRespond(withSuccess("{\"data\":{\"list\":[]}}", MediaType.APPLICATION_JSON));
 
-        var resposta = client.buscarExportacoes(YearMonth.of(2025, 6), YearMonth.of(2025, 6), 72);
+        var client = criarClient(3, circuitoPermissivo());
+        var resposta = client.buscarExportacoes(JUNHO, JUNHO, 72);
+
+        assertThat(resposta.statusHttp()).isEqualTo(200);
+        servidor.verify();
+    }
+
+    @Test
+    void esgotadasAsTentativasDevolveAUltimaRespostaDeErro() {
+        servidor.expect(ExpectedCount.times(3), requestTo(URL_GENERAL))
+                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body("{\"error\":{\"code\":429}}"));
+
+        var client = criarClient(3, circuitoPermissivo());
+        var resposta = client.buscarExportacoes(JUNHO, JUNHO, 72);
 
         assertThat(resposta.sucesso()).isFalse();
         assertThat(resposta.statusHttp()).isEqualTo(429);
-        assertThat(resposta.corpo()).contains("429");
+        servidor.verify();
     }
 
     @Test
     void traduzFalhaDeRedeParaExternalSourceException() {
+        servidor.expect(ExpectedCount.times(2), requestTo(URL_GENERAL))
+                .andRespond(withException(new java.io.IOException("conexão recusada")));
+
+        var client = criarClient(2, circuitoPermissivo());
+
+        assertThatThrownBy(() -> client.buscarExportacoes(JUNHO, JUNHO, 72))
+                .isInstanceOf(ExternalSourceException.class)
+                .hasMessageContaining("Comex Stat");
+        servidor.verify();
+    }
+
+    @Test
+    void circuitoAbertoFalhaRapidoSemChamarARede() {
+        // circuito sensível: uma única falha de rede abre
+        var circuitBreaker = CircuitBreaker.of("teste-sensivel", CircuitBreakerConfig.custom()
+                .slidingWindowSize(1)
+                .minimumNumberOfCalls(1)
+                .failureRateThreshold(50)
+                .waitDurationInOpenState(Duration.ofMinutes(1))
+                .recordException(ex -> ex instanceof ExternalSourceException)
+                .build());
         servidor.expect(requestTo(URL_GENERAL))
                 .andRespond(withException(new java.io.IOException("conexão recusada")));
 
-        assertThatThrownBy(() -> client.buscarExportacoes(YearMonth.of(2025, 6), YearMonth.of(2025, 6), 72))
+        var client = criarClient(1, circuitBreaker);
+
+        assertThatThrownBy(() -> client.buscarExportacoes(JUNHO, JUNHO, 72))
+                .isInstanceOf(ExternalSourceException.class);
+        // segunda chamada: o circuito está aberto, a rede nem é tentada
+        assertThatThrownBy(() -> client.buscarExportacoes(JUNHO, JUNHO, 72))
                 .isInstanceOf(ExternalSourceException.class)
-                .hasMessageContaining("Comex Stat");
+                .hasMessageContaining("Circuito aberto");
+        servidor.verify();
     }
 }
