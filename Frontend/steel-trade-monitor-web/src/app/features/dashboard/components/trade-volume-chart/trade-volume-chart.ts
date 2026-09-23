@@ -69,7 +69,7 @@ export class TradeVolumeChart implements OnDestroy {
           plugins: {
             title: {
               display: true,
-              text: 'Volume embarcado × valor FOB — exportações mensais de ferro e aço',
+              text: 'Volume embarcado × valor FOB - exportações mensais de ferro e aço',
               font: { size: 15, weight: 600 },
               padding: { bottom: 2 },
             },
