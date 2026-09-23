@@ -5,7 +5,8 @@ WORKDIR /app
 # camada de dependências separada: só invalida quando o pom muda
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
-RUN ./mvnw -q dependency:go-offline
+# checkout no Windows perde o bit de execução do mvnw
+RUN chmod +x mvnw && ./mvnw -q dependency:go-offline
 
 COPY src/ src/
 RUN ./mvnw -q package -DskipTests
