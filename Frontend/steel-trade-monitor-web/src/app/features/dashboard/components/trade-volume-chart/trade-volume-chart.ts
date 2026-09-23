@@ -45,7 +45,7 @@ export class TradeVolumeChart implements OnDestroy {
           labels: points.map(p => p.period),
           datasets: [
             {
-              label: 'Volume (mil t)',
+              label: 'Volume embarcado (mil t)',
               data: points.map(p => p.kgLiquido / 1_000_000),
               borderColor: '#1d4ed8',
               backgroundColor: 'rgba(29, 78, 216, 0.1)',
@@ -54,7 +54,7 @@ export class TradeVolumeChart implements OnDestroy {
               yAxisID: 'y',
             },
             {
-              label: 'Valor FOB (mi US$)',
+              label: 'Valor FOB (milhões de US$)',
               data: points.map(p => p.valorFobUsd / 1_000_000),
               borderColor: '#b45309',
               tension: 0.25,
@@ -66,15 +66,29 @@ export class TradeVolumeChart implements OnDestroy {
           responsive: true,
           maintainAspectRatio: false,
           interaction: { mode: 'index', intersect: false },
+          plugins: {
+            title: {
+              display: true,
+              text: 'Volume embarcado × valor FOB — exportações mensais de ferro e aço',
+              font: { size: 15, weight: 600 },
+              padding: { bottom: 2 },
+            },
+            subtitle: {
+              display: true,
+              text: 'FOB (Free on Board): valor da mercadoria no embarque, sem frete e seguro',
+              color: '#6b7280',
+              padding: { bottom: 12 },
+            },
+          },
           scales: {
             y: {
               position: 'left',
-              title: { display: true, text: 'mil toneladas' },
+              title: { display: true, text: 'milhares de toneladas (mil t)' },
             },
             y1: {
               position: 'right',
               grid: { drawOnChartArea: false },
-              title: { display: true, text: 'milhões US$ FOB' },
+              title: { display: true, text: 'milhões de dólares FOB (US$ mi)' },
             },
           },
         },

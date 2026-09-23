@@ -70,23 +70,23 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
               <app-kpi-card
                 label="Preço médio do período"
                 [value]="usdPorTonelada(r.precoMedioPeriodoUsdPorTonelada)"
-                hint="FOB ÷ toneladas"
+                hint="US$/t = dólares por tonelada (valor FOB ÷ toneladas)"
               />
               <app-kpi-card
                 [label]="'Preço em ' + r.ultimoPeriodo"
                 [value]="usdPorTonelada(r.precoUltimoMesUsdPorTonelada)"
                 [trendPercent]="r.variacaoPrecoPercentual"
-                hint="vs mês anterior"
+                hint="variação vs mês anterior"
               />
               <app-kpi-card
                 label="Volume exportado"
                 [value]="toneladas(r.volumeTotalToneladas)"
-                [hint]="periodoHint()"
+                [hint]="'mi t = milhões de toneladas · ' + periodoHint()"
               />
               <app-kpi-card
-                label="Valor FOB"
+                label="Valor FOB (Free on Board)"
                 [value]="usd(r.valorTotalFobUsd)"
-                [hint]="periodoHint()"
+                [hint]="'valor no embarque, sem frete e seguro · ' + periodoHint()"
               />
             </div>
           }
