@@ -1,4 +1,4 @@
-import { formatarPeriodo, resumirSerie, rotuloPeriodo, serieDePreco } from './dashboard.metrics';
+import { formatarPeriodo, resumirSerie, rotuloPeriodo, serieDePreco, ultimosMeses } from './dashboard.metrics';
 import { TimeSeriesPoint } from '../../core/models/time-series-point.model';
 
 describe('resumirSerie', () => {
@@ -36,6 +36,27 @@ describe('resumirSerie', () => {
   it('série vazia ou sem volume devolve null', () => {
     expect(resumirSerie([])).toBeNull();
     expect(resumirSerie([{ period: '2025-06', kgLiquido: 0, valorFobUsd: 10 }])).toBeNull();
+  });
+});
+
+describe('ultimosMeses', () => {
+  const serie: TimeSeriesPoint[] = [
+    { period: '2025-01', kgLiquido: 1, valorFobUsd: 1 },
+    { period: '2025-02', kgLiquido: 2, valorFobUsd: 2 },
+    { period: '2025-03', kgLiquido: 3, valorFobUsd: 3 },
+  ];
+
+  it('devolve os N meses mais recentes', () => {
+    const fatia = ultimosMeses(serie, 2);
+    expect(fatia.map(p => p.period)).toEqual(['2025-02', '2025-03']);
+  });
+
+  it('pedir mais meses do que existe devolve a série inteira', () => {
+    expect(ultimosMeses(serie, 24)).toEqual(serie);
+  });
+
+  it('série vazia continua vazia', () => {
+    expect(ultimosMeses([], 6)).toEqual([]);
   });
 });
 

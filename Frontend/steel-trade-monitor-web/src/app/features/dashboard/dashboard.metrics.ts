@@ -63,6 +63,11 @@ export function serieDePreco(pontos: TimeSeriesPoint[]): PontoPreco[] {
     .map(p => ({ period: p.period, usdPorTonelada: precoPorTonelada(p) }));
 }
 
+/** Últimos N meses de uma série já ordenada (fatiamento local — sem refetch). */
+export function ultimosMeses(pontos: TimeSeriesPoint[], quantidade: number): TimeSeriesPoint[] {
+  return quantidade >= pontos.length ? pontos : pontos.slice(pontos.length - quantidade);
+}
+
 const MESES_ABREVIADOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
 /** "2025-01" → "jan/2025". */

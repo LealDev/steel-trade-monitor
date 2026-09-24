@@ -9,7 +9,7 @@ import { FreshnessBadge } from '../../shared/components/freshness-badge/freshnes
 import { KpiCard } from '../../shared/components/kpi-card/kpi-card';
 import { TradeVolumeChart } from './components/trade-volume-chart/trade-volume-chart';
 import { UnitPriceChart } from './components/unit-price-chart/unit-price-chart';
-import { resumirSerie, rotuloPeriodo } from './dashboard.metrics';
+import { resumirSerie, rotuloPeriodo, ultimosMeses } from './dashboard.metrics';
 
 interface HealthResponse {
   status: string;
@@ -39,13 +39,27 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
             <span class="status status--down">indisponível</span>
           }
         </p>
-        @if (fontes().length > 0) {
-          <div class="dashboard__badges">
-            @for (fonte of fontes(); track fonte.fonte) {
-              <app-freshness-badge [freshness]="fonte" />
+        <div class="dashboard__controles">
+          @if (fontes().length > 0) {
+            <div class="dashboard__badges">
+              @for (fonte of fontes(); track fonte.fonte) {
+                <app-freshness-badge [freshness]="fonte" />
+              }
+            </div>
+          }
+          <div class="dashboard__periodos" role="group" aria-label="Período de análise">
+            @for (opcao of periodosDisponiveis; track opcao) {
+              <button
+                type="button"
+                class="periodo-btn"
+                [class.periodo-btn--ativo]="periodoMeses() === opcao"
+                (click)="periodoMeses.set(opcao)"
+              >
+                {{ opcao }} meses
+              </button>
             }
           </div>
-        }
+        </div>
       </header>
 
       @switch (estadoSerie()) {
@@ -130,11 +144,43 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
       padding: 0.18rem 0.7rem;
       white-space: nowrap;
     }
+    .dashboard__controles {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
     .dashboard__badges {
       display: flex;
       gap: 0.5rem;
       flex-wrap: wrap;
-      margin-bottom: 1rem;
+    }
+    .dashboard__periodos {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .periodo-btn {
+      font: 600 0.72rem var(--font-display);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      border-right: 1px solid var(--border);
+      padding: 0.42rem 0.9rem;
+      cursor: pointer;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+    .periodo-btn:last-child { border-right: none; }
+    .periodo-btn:hover { color: var(--text); background: var(--surface-2); }
+    .periodo-btn--ativo {
+      color: #140901;
+      background: linear-gradient(145deg, var(--molten), #d95c0e);
     }
     .dashboard__kpis {
       display: grid;
@@ -195,10 +241,22 @@ export class DashboardPage {
   private readonly tradeAnalytics = inject(TradeAnalyticsService);
   private readonly dataFreshness = inject(DataFreshnessService);
 
+  /**
+   * Janela máxima buscada do backend: 24 meses (24 pontos agregados — leve
+   * mesmo com o histórico crescendo). Períodos menores são fatias locais da
+   * mesma resposta: trocar o seletor não gera requisição nova.
+   * Para ampliar o teto no futuro, basta ajustar estas duas constantes.
+   */
+  static readonly JANELA_MAXIMA_MESES = 24;
+  readonly periodosDisponiveis = [6, 12, 24];
+
   readonly backendStatus = signal<string | null>(null);
-  readonly serie = signal<TimeSeriesPoint[]>([]);
+  readonly serieCompleta = signal<TimeSeriesPoint[]>([]);
+  readonly periodoMeses = signal(12);
   readonly estadoSerie = signal<EstadoSerie>('carregando');
   readonly fontes = signal<SourceFreshness[]>([]);
+
+  readonly serie = computed(() => ultimosMeses(this.serieCompleta(), this.periodoMeses()));
   readonly resumo = computed(() => resumirSerie(this.serie()));
   readonly periodoExibido = computed(() => rotuloPeriodo(this.serie()));
 
@@ -219,13 +277,22 @@ export class DashboardPage {
       error: () => this.fontes.set([]),
     });
 
-    this.tradeAnalytics.getTimeSeries({ flow: 'EXPORT', ncmChapter: 72 }).subscribe({
-      next: pontos => {
-        this.serie.set(pontos);
-        this.estadoSerie.set(pontos.length > 0 ? 'pronto' : 'vazio');
-      },
-      error: () => this.estadoSerie.set('erro'),
-    });
+    this.tradeAnalytics
+      .getTimeSeries({ flow: 'EXPORT', ncmChapter: 72, from: this.inicioDaJanelaMaxima() })
+      .subscribe({
+        next: pontos => {
+          this.serieCompleta.set(pontos);
+          this.estadoSerie.set(pontos.length > 0 ? 'pronto' : 'vazio');
+        },
+        error: () => this.estadoSerie.set('erro'),
+      });
+  }
+
+  private inicioDaJanelaMaxima(): string {
+    const inicio = new Date();
+    inicio.setDate(1);
+    inicio.setMonth(inicio.getMonth() - (DashboardPage.JANELA_MAXIMA_MESES - 1));
+    return `${inicio.getFullYear()}-${String(inicio.getMonth() + 1).padStart(2, '0')}`;
   }
 
   usdPorTonelada(valor: number): string {
