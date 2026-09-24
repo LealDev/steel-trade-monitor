@@ -7,4 +7,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/dashboard/dashboard.page').then(m => m.DashboardPage),
   },
+  {
+    path: 'explorer',
+    loadComponent: () =>
+      import('./features/trade-explorer/trade-explorer.page').then(m => m.TradeExplorerPage),
+  },
 ];

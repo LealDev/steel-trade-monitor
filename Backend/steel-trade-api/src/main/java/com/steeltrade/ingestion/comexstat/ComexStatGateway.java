@@ -3,6 +3,7 @@ package com.steeltrade.ingestion.comexstat;
 import java.time.YearMonth;
 
 import com.steeltrade.ingestion.comexstat.dto.ComexStatRawResponse;
+import com.steeltrade.warehouse.fact.Fluxo;
 
 /**
  * Porta (arquitetura hexagonal): o núcleo depende desta interface,
@@ -10,5 +11,5 @@ import com.steeltrade.ingestion.comexstat.dto.ComexStatRawResponse;
  */
 public interface ComexStatGateway {
 
-    ComexStatRawResponse buscarExportacoes(YearMonth de, YearMonth ate, int capitulo);
+    ComexStatRawResponse buscar(Fluxo fluxo, YearMonth de, YearMonth ate, int capitulo);
 }

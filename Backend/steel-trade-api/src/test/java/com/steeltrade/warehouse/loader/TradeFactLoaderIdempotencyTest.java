@@ -112,7 +112,7 @@ class TradeFactLoaderIdempotencyTest {
     }
 
     private RawPayload novaStaging(String payload) {
-        return new RawPayload("COMEXSTAT", "/general?language=pt", "{}", payload,
+        return new RawPayload("COMEXSTAT", "/general?language=pt", "{\"flow\":\"export\"}", payload,
                 200, StatusProcessamento.PENDENTE, null, OffsetDateTime.now());
     }
 

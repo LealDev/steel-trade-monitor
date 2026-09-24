@@ -46,7 +46,8 @@ public class ComexStatIngestionController {
         if (StringUtils.hasText(tokenConfigurado) && !tokenConfigurado.equals(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        var resultado = ingestionRunner.executarComexStat(request.from(), request.to(), request.chapter());
+        var resultado = ingestionRunner.executarComexStat(request.fluxoOuPadrao(),
+                request.from(), request.to(), request.chapter());
         var status = resultado.statusExecucao() == StatusExecucao.FALHA
                 ? HttpStatus.BAD_GATEWAY
                 : HttpStatus.CREATED;

@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import tools.jackson.databind.ObjectMapper;
+
 @Service
 public class TradeFactLoaderImpl implements TradeFactLoader {
 
@@ -27,6 +29,7 @@ public class TradeFactLoaderImpl implements TradeFactLoader {
     private final DimensionSyncService dimensionSyncService;
     private final TradeFactUpsertRepository upsertRepository;
     private final TransactionTemplate transactionTemplate;
+    private final ObjectMapper objectMapper;
     private final Clock clock;
 
     public TradeFactLoaderImpl(RawPayloadRepository rawPayloadRepository,
@@ -34,12 +37,14 @@ public class TradeFactLoaderImpl implements TradeFactLoader {
                                DimensionSyncService dimensionSyncService,
                                TradeFactUpsertRepository upsertRepository,
                                TransactionTemplate transactionTemplate,
+                               ObjectMapper objectMapper,
                                Clock clock) {
         this.rawPayloadRepository = rawPayloadRepository;
         this.mapper = mapper;
         this.dimensionSyncService = dimensionSyncService;
         this.upsertRepository = upsertRepository;
         this.transactionTemplate = transactionTemplate;
+        this.objectMapper = objectMapper;
         this.clock = clock;
     }
 
@@ -75,11 +80,12 @@ public class TradeFactLoaderImpl implements TradeFactLoader {
     }
 
     private int carregar(RawPayload staging) {
+        Fluxo fluxo = fluxoDaColeta(staging);
         var registros = mapper.mapear(staging.getPayload());
         for (var registro : registros) {
             var chaves = dimensionSyncService.sincronizar(registro);
             upsertRepository.upsert(new TradeFactUpsertRepository.UpsertCommand(
-                    Fluxo.EXPORT,
+                    fluxo,
                     chaves.tempoId(), chaves.ncmId(), chaves.paisId(), chaves.ufId(), chaves.viaId(),
                     registro.kgLiquido(), registro.valorFobUsd()));
         }
@@ -87,5 +93,19 @@ public class TradeFactLoaderImpl implements TradeFactLoader {
         gerenciado.marcarProcessado(OffsetDateTime.now(clock));
         rawPayloadRepository.save(gerenciado);
         return registros.size();
+    }
+
+    /**
+     * O fluxo (export/import) vem dos parâmetros da coleta gravados na
+     * staging — o payload em si não o informa.
+     */
+    private Fluxo fluxoDaColeta(RawPayload staging) {
+        String flow = objectMapper.readTree(staging.getParametros()).path("flow").asString();
+        return switch (flow) {
+            case "export" -> Fluxo.EXPORT;
+            case "import" -> Fluxo.IMPORT;
+            default -> throw new IllegalArgumentException(
+                    "Parâmetros da staging sem flow reconhecível: " + flow);
+        };
     }
 }

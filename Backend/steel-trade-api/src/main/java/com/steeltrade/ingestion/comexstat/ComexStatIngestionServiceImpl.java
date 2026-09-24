@@ -8,6 +8,7 @@ import com.steeltrade.ingestion.comexstat.dto.IngestionRunResponse;
 import com.steeltrade.ingestion.staging.RawPayload;
 import com.steeltrade.ingestion.staging.RawPayloadRepository;
 import com.steeltrade.ingestion.staging.StatusProcessamento;
+import com.steeltrade.warehouse.fact.Fluxo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +42,8 @@ public class ComexStatIngestionServiceImpl implements ComexStatIngestionService 
 
     @Override
     @Transactional
-    public IngestionRunResponse coletarExportacoes(YearMonth de, YearMonth ate, int capitulo) {
-        var resposta = gateway.buscarExportacoes(de, ate, capitulo);
+    public IngestionRunResponse coletar(Fluxo fluxo, YearMonth de, YearMonth ate, int capitulo) {
+        var resposta = gateway.buscar(fluxo, de, ate, capitulo);
 
         var status = resposta.sucesso() ? StatusProcessamento.PENDENTE : StatusProcessamento.ERRO;
         String mensagemErro = resposta.sucesso() ? null : "Fonte respondeu HTTP " + resposta.statusHttp();

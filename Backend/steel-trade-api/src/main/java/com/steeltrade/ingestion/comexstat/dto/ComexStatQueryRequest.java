@@ -3,6 +3,8 @@ package com.steeltrade.ingestion.comexstat.dto;
 import java.time.YearMonth;
 import java.util.List;
 
+import com.steeltrade.warehouse.fact.Fluxo;
+
 /**
  * Formato do body aceito pelo POST /general do Comex Stat.
  * Contrato validado em 2026-09: o detail de via de transporte chama-se "via";
@@ -23,9 +25,9 @@ public record ComexStatQueryRequest(
     public record Filter(String filter, List<Integer> values) {
     }
 
-    public static ComexStatQueryRequest exportacoesPorCapitulo(YearMonth de, YearMonth ate, int capitulo) {
+    public static ComexStatQueryRequest porCapitulo(Fluxo fluxo, YearMonth de, YearMonth ate, int capitulo) {
         return new ComexStatQueryRequest(
-                "export",
+                fluxo == Fluxo.IMPORT ? "import" : "export",
                 true,
                 new Period(de.toString(), ate.toString()),
                 List.of(new Filter("chapter", List.of(capitulo))),

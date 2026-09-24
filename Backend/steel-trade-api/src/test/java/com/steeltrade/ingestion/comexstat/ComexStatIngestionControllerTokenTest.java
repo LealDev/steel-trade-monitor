@@ -54,7 +54,7 @@ class ComexStatIngestionControllerTokenTest {
                         .content(BODY))
                 .andExpect(status().isUnauthorized());
 
-        verify(ingestionRunner, never()).executarComexStat(any(), any(), anyInt());
+        verify(ingestionRunner, never()).executarComexStat(any(), any(), any(), anyInt());
     }
 
     @Test
@@ -65,16 +65,13 @@ class ComexStatIngestionControllerTokenTest {
                         .content(BODY))
                 .andExpect(status().isUnauthorized());
 
-        verify(ingestionRunner, never()).executarComexStat(any(), any(), anyInt());
+        verify(ingestionRunner, never()).executarComexStat(any(), any(), any(), anyInt());
     }
 
     @Test
     void tokenCorretoExecutaOPipeline() throws Exception {
-        when(ingestionRunner.executarComexStat(any(), any(), anyInt())).thenReturn(new PipelineRunResponse(
-                1L, StatusExecucao.SUCESSO,
-                new IngestionRunResponse(1L, 200, StatusProcessamento.PENDENTE, null,
-                        OffsetDateTime.now(ZoneOffset.UTC)),
-                new TradeFactLoader.LoadResult(1, 988, 0)));
+        when(ingestionRunner.executarComexStat(any(), any(), any(), anyInt())).thenReturn(new PipelineRunResponse(
+                1L, StatusExecucao.SUCESSO, 1, 0, new TradeFactLoader.LoadResult(1, 988, 0)));
 
         mockMvc.perform(post("/v1/ingestion/comexstat/runs")
                         .contentType(MediaType.APPLICATION_JSON)

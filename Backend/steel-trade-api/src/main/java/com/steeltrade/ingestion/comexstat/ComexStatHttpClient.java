@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import com.steeltrade.ingestion.comexstat.dto.ComexStatQueryRequest;
 import com.steeltrade.ingestion.comexstat.dto.ComexStatRawResponse;
 import com.steeltrade.shared.exception.ExternalSourceException;
+import com.steeltrade.warehouse.fact.Fluxo;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
@@ -47,8 +48,8 @@ public class ComexStatHttpClient implements ComexStatGateway {
     }
 
     @Override
-    public ComexStatRawResponse buscarExportacoes(YearMonth de, YearMonth ate, int capitulo) {
-        var consulta = ComexStatQueryRequest.exportacoesPorCapitulo(de, ate, capitulo);
+    public ComexStatRawResponse buscar(Fluxo fluxo, YearMonth de, YearMonth ate, int capitulo) {
+        var consulta = ComexStatQueryRequest.porCapitulo(fluxo, de, ate, capitulo);
         String parametros = objectMapper.writeValueAsString(consulta);
 
         Supplier<ComexStatRawResponse> chamada = () -> executarPost(consulta, parametros);

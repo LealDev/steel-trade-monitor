@@ -10,6 +10,7 @@ import com.steeltrade.ingestion.comexstat.dto.ComexStatRawResponse;
 import com.steeltrade.ingestion.staging.RawPayload;
 import com.steeltrade.ingestion.staging.RawPayloadRepository;
 import com.steeltrade.ingestion.staging.StatusProcessamento;
+import com.steeltrade.warehouse.fact.Fluxo;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,10 +50,10 @@ class ComexStatIngestionServiceImplTest {
 
     @Test
     void respostaDeSucessoViraStagingPendente() {
-        when(gateway.buscarExportacoes(any(), any(), anyInt())).thenReturn(new ComexStatRawResponse(
+        when(gateway.buscar(any(), any(), any(), anyInt())).thenReturn(new ComexStatRawResponse(
                 "/general?language=pt", "{\"flow\":\"export\"}", 200, "{\"data\":{\"list\":[]}}"));
 
-        var resultado = service.coletarExportacoes(JUNHO, JUNHO, 72);
+        var resultado = service.coletar(Fluxo.EXPORT, JUNHO, JUNHO, 72);
 
         var captor = ArgumentCaptor.forClass(RawPayload.class);
         verify(repository).save(captor.capture());
@@ -69,10 +70,10 @@ class ComexStatIngestionServiceImplTest {
 
     @Test
     void respostaHttpDeErroViraDeadLetterSemQuebrarOFluxo() {
-        when(gateway.buscarExportacoes(any(), any(), anyInt())).thenReturn(new ComexStatRawResponse(
+        when(gateway.buscar(any(), any(), any(), anyInt())).thenReturn(new ComexStatRawResponse(
                 "/general?language=pt", "{}", 429, "{\"error\":{\"code\":429}}"));
 
-        var resultado = service.coletarExportacoes(JUNHO, JUNHO, 72);
+        var resultado = service.coletar(Fluxo.EXPORT, JUNHO, JUNHO, 72);
 
         var captor = ArgumentCaptor.forClass(RawPayload.class);
         verify(repository).save(captor.capture());
@@ -86,10 +87,10 @@ class ComexStatIngestionServiceImplTest {
     @Test
     void corpoNaoJsonEEnvelopadoParaCaberNaColunaJsonb() {
         String html = "<html>Attention Required! | Cloudflare</html>";
-        when(gateway.buscarExportacoes(any(), any(), anyInt())).thenReturn(new ComexStatRawResponse(
+        when(gateway.buscar(any(), any(), any(), anyInt())).thenReturn(new ComexStatRawResponse(
                 "/general?language=pt", "{}", 403, html));
 
-        service.coletarExportacoes(JUNHO, JUNHO, 72);
+        service.coletar(Fluxo.EXPORT, JUNHO, JUNHO, 72);
 
         var captor = ArgumentCaptor.forClass(RawPayload.class);
         verify(repository).save(captor.capture());

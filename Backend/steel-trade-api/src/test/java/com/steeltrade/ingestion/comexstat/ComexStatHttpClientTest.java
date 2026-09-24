@@ -7,6 +7,7 @@ import com.steeltrade.ingestion.comexstat.dto.ComexStatRawResponse;
 import com.steeltrade.shared.config.ComexStatProperties;
 import com.steeltrade.shared.config.HttpClientConfig;
 import com.steeltrade.shared.exception.ExternalSourceException;
+import com.steeltrade.warehouse.fact.Fluxo;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
@@ -52,7 +53,7 @@ class ComexStatHttpClientTest {
     @BeforeEach
     void configurar() {
         RestClient.Builder builder = RestClient.builder();
-        var properties = new ComexStatProperties(BASE_URL, "UA-Teste/1.0", 6);
+        var properties = new ComexStatProperties(BASE_URL, "UA-Teste/1.0", 6, 0);
         // aplica a config real (baseUrl, User-Agent) e só depois troca o
         // requestFactory pelo mock — a ordem inversa perderia o mock
         new HttpClientConfig().comexStatRestClient(builder, properties);
@@ -92,13 +93,27 @@ class ComexStatHttpClientTest {
                 .andRespond(withSuccess("{\"data\":{\"list\":[]}}", MediaType.APPLICATION_JSON));
 
         var client = criarClient(1, circuitoPermissivo());
-        var resposta = client.buscarExportacoes(YearMonth.of(2025, 1), JUNHO, 72);
+        var resposta = client.buscar(Fluxo.EXPORT, YearMonth.of(2025, 1), JUNHO, 72);
 
         assertThat(resposta.sucesso()).isTrue();
         assertThat(resposta.statusHttp()).isEqualTo(200);
         assertThat(resposta.corpo()).isEqualTo("{\"data\":{\"list\":[]}}");
         assertThat(resposta.endpoint()).isEqualTo("/general?language=pt");
         assertThat(resposta.parametrosJson()).contains("\"chapter\"");
+        servidor.verify();
+    }
+
+    @Test
+    void fluxoDeImportacaoUsaFlowImportNoBody() {
+        servidor.expect(requestTo(URL_GENERAL))
+                .andExpect(jsonPath("$.flow").value("import"))
+                .andExpect(jsonPath("$.filters[0].values[0]").value(73))
+                .andRespond(withSuccess("{\"data\":{\"list\":[]}}", MediaType.APPLICATION_JSON));
+
+        var client = criarClient(1, circuitoPermissivo());
+        var resposta = client.buscar(Fluxo.IMPORT, JUNHO, JUNHO, 73);
+
+        assertThat(resposta.sucesso()).isTrue();
         servidor.verify();
     }
 
@@ -112,7 +127,7 @@ class ComexStatHttpClientTest {
                 .andRespond(withSuccess("{\"data\":{\"list\":[]}}", MediaType.APPLICATION_JSON));
 
         var client = criarClient(3, circuitoPermissivo());
-        var resposta = client.buscarExportacoes(JUNHO, JUNHO, 72);
+        var resposta = client.buscar(Fluxo.EXPORT, JUNHO, JUNHO, 72);
 
         assertThat(resposta.statusHttp()).isEqualTo(200);
         servidor.verify();
@@ -126,7 +141,7 @@ class ComexStatHttpClientTest {
                         .body("{\"error\":{\"code\":429}}"));
 
         var client = criarClient(3, circuitoPermissivo());
-        var resposta = client.buscarExportacoes(JUNHO, JUNHO, 72);
+        var resposta = client.buscar(Fluxo.EXPORT, JUNHO, JUNHO, 72);
 
         assertThat(resposta.sucesso()).isFalse();
         assertThat(resposta.statusHttp()).isEqualTo(429);
@@ -140,7 +155,7 @@ class ComexStatHttpClientTest {
 
         var client = criarClient(2, circuitoPermissivo());
 
-        assertThatThrownBy(() -> client.buscarExportacoes(JUNHO, JUNHO, 72))
+        assertThatThrownBy(() -> client.buscar(Fluxo.EXPORT, JUNHO, JUNHO, 72))
                 .isInstanceOf(ExternalSourceException.class)
                 .hasMessageContaining("Comex Stat");
         servidor.verify();
@@ -161,10 +176,10 @@ class ComexStatHttpClientTest {
 
         var client = criarClient(1, circuitBreaker);
 
-        assertThatThrownBy(() -> client.buscarExportacoes(JUNHO, JUNHO, 72))
+        assertThatThrownBy(() -> client.buscar(Fluxo.EXPORT, JUNHO, JUNHO, 72))
                 .isInstanceOf(ExternalSourceException.class);
         // segunda chamada: o circuito está aberto, a rede nem é tentada
-        assertThatThrownBy(() -> client.buscarExportacoes(JUNHO, JUNHO, 72))
+        assertThatThrownBy(() -> client.buscar(Fluxo.EXPORT, JUNHO, JUNHO, 72))
                 .isInstanceOf(ExternalSourceException.class)
                 .hasMessageContaining("Circuito aberto");
         servidor.verify();

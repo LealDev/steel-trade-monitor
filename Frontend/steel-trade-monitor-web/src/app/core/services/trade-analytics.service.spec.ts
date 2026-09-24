@@ -45,4 +45,23 @@ describe('TradeAnalyticsService', () => {
     expect(req.request.params.keys().length).toBe(0);
     req.flush([]);
   });
+
+  it('consulta o ranking de países com limite', () => {
+    service.getTopCountries({ flow: 'IMPORT', ncmChapter: 73 }, 5).subscribe();
+
+    const req = httpMock.expectOne(r => r.url === '/api/v1/trade/top-countries');
+    expect(req.request.params.get('flow')).toBe('IMPORT');
+    expect(req.request.params.get('ncmChapter')).toBe('73');
+    expect(req.request.params.get('limit')).toBe('5');
+    req.flush([]);
+  });
+
+  it('consulta o recorte por via de transporte', () => {
+    service.getByTransport({ from: '2026-01', to: '2026-08' }).subscribe();
+
+    const req = httpMock.expectOne(r => r.url === '/api/v1/trade/by-transport');
+    expect(req.request.params.get('from')).toBe('2026-01');
+    expect(req.request.params.get('to')).toBe('2026-08');
+    req.flush([]);
+  });
 });
