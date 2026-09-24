@@ -29,36 +29,60 @@ import { Component, input } from '@angular/core';
   `,
   styles: `
     .kpi {
+      position: relative;
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
-      padding: 1rem 1.25rem;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      background: #fff;
+      gap: 0.3rem;
+      padding: 1rem 1.25rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, var(--surface-2), var(--surface));
+      overflow: hidden;
+      transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .kpi::before {
+      content: '';
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: linear-gradient(180deg, var(--molten), transparent 85%);
+      opacity: 0.55;
+    }
+    .kpi:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     }
     .kpi__label {
-      font-size: 0.78rem;
-      color: #6b7280;
+      font-family: var(--font-display);
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.09em;
     }
     .kpi__value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #111827;
+      font-family: var(--font-mono);
+      font-size: 1.55rem;
+      font-weight: 600;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
     }
     .kpi__footer {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.6rem;
       align-items: baseline;
-      font-size: 0.78rem;
+      font-size: 0.74rem;
       min-height: 1rem;
     }
-    .kpi__trend { color: #6b7280; font-weight: 600; }
-    .kpi__trend--up { color: #15803d; }
-    .kpi__trend--down { color: #b91c1c; }
-    .kpi__hint { color: #9ca3af; }
+    .kpi__trend {
+      font-family: var(--font-mono);
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .kpi__trend--up { color: var(--ok); }
+    .kpi__trend--down { color: var(--err); }
+    .kpi__hint { color: var(--faint); }
   `,
 })
 export class KpiCard {

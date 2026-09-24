@@ -84,50 +84,92 @@ import { FreshnessBadge } from '../../shared/components/freshness-badge/freshnes
     </section>
   `,
   styles: `
-    .status { padding: 1.5rem; }
-    .status h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
-    .status__sub { margin: 0 0 1rem; color: #6b7280; font-size: 0.9rem; }
-    .fontes { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .status { padding: 1.5rem 1.75rem 2rem; }
+    .status h2 {
+      margin: 0 0 0.25rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status__sub { margin: 0 0 1rem; color: var(--muted); font-size: 0.88rem; max-width: 46rem; }
+    .fontes { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.6rem; }
     .fonte-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
-      background: #fff;
-      min-width: 280px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.3rem;
+      background: linear-gradient(180deg, var(--surface-2), var(--surface));
+      min-width: 300px;
+      animation: rise-in 0.45s ease backwards;
     }
-    .fonte-card dl { margin: 0.75rem 0 0; font-size: 0.85rem; }
-    .fonte-card dl div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
-    .fonte-card dt { color: #6b7280; }
-    .fonte-card dd { margin: 0; font-weight: 600; }
-    .fonte-card .erro { color: #b91c1c; }
-    .status h3 { font-size: 1rem; margin: 0 0 0.5rem; }
-    .historico { width: 100%; border-collapse: collapse; font-size: 0.83rem; background: #fff; }
-    .historico th, .historico td { padding: 0.4rem 0.6rem; text-align: left; }
+    .fonte-card dl { margin: 0.85rem 0 0; font-size: 0.83rem; }
+    .fonte-card dl div {
+      display: flex; justify-content: space-between; gap: 1.25rem;
+      padding: 0.22rem 0;
+      border-bottom: 1px solid color-mix(in srgb, var(--border) 45%, transparent);
+    }
+    .fonte-card dl div:last-child { border-bottom: none; }
+    .fonte-card dt { color: var(--faint); }
+    .fonte-card dd { margin: 0; font-family: var(--font-mono); font-weight: 500; color: var(--text); }
+    .fonte-card .erro { color: var(--err); }
+    .status h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin: 0 0 0.6rem;
+    }
+    .historico {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      animation: rise-in 0.5s ease 0.1s backwards;
+    }
+    .historico th, .historico td { padding: 0.5rem 0.7rem; text-align: left; }
     .historico thead th {
-      color: #6b7280; font-size: 0.72rem; text-transform: uppercase;
-      letter-spacing: 0.03em; border-bottom: 1px solid #e5e7eb;
+      font-family: var(--font-display);
+      color: var(--faint); font-size: 0.66rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
     }
-    .historico tbody tr:nth-child(odd) { background: #f9fafb; }
-    .historico .num { text-align: right; font-variant-numeric: tabular-nums; }
-    .historico .msg { color: #6b7280; max-width: 26rem; }
-    .historico .vazio { text-align: center; color: #9ca3af; padding: 1.5rem; }
-    .pill { padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }
-    .pill--sucesso { background: #ecfdf5; color: #15803d; }
-    .pill--falha { background: #fef2f2; color: #b91c1c; }
-    .pill--parcial { background: #fffbeb; color: #b45309; }
-    .pill--em_andamento { background: #eff6ff; color: #1d4ed8; }
+    .historico tbody tr { border-bottom: 1px solid color-mix(in srgb, var(--border) 40%, transparent); }
+    .historico tbody tr:hover { background: var(--molten-soft); }
+    .historico td:first-child { font-family: var(--font-mono); color: var(--faint); }
+    .historico .num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    .historico .msg { color: var(--faint); max-width: 26rem; }
+    .historico .vazio { text-align: center; color: var(--faint); padding: 1.6rem; }
+    .pill {
+      font-family: var(--font-mono);
+      padding: 0.12rem 0.6rem; border-radius: 999px;
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.03em;
+    }
+    .pill--sucesso { background: var(--ok-soft); color: var(--ok); }
+    .pill--falha { background: var(--err-soft); color: var(--err); }
+    .pill--parcial { background: var(--warn-soft); color: var(--warn); }
+    .pill--em_andamento { background: rgba(106, 169, 233, 0.14); color: var(--steel); }
     .paginacao {
       display: flex; align-items: center; gap: 1rem;
-      margin-top: 0.75rem; font-size: 0.85rem; color: #4b5563;
+      margin-top: 0.85rem; font-size: 0.82rem; color: var(--muted);
     }
     .paginacao button {
-      font: inherit; padding: 0.3rem 0.8rem; border: 1px solid #d1d5db;
-      border-radius: 6px; background: #fff; cursor: pointer;
+      font: 600 0.78rem var(--font-display);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--muted);
+      padding: 0.38rem 0.9rem; border: 1px solid var(--border);
+      border-radius: 6px; background: var(--surface-2); cursor: pointer;
+      transition: color 0.15s ease, border-color 0.15s ease;
     }
-    .paginacao button:disabled { opacity: 0.4; cursor: default; }
+    .paginacao button:hover:not(:disabled) { color: var(--molten); border-color: var(--molten); }
+    .paginacao button:disabled { opacity: 0.35; cursor: default; }
     .placeholder {
-      padding: 2rem 1.5rem; border: 1px dashed #d1d5db; border-radius: 8px;
-      color: #6b7280; text-align: center;
+      padding: 2.2rem 1.5rem; border: 1px dashed var(--border-strong);
+      border-radius: var(--radius); background: var(--surface);
+      color: var(--muted); text-align: center;
     }
   `,
 })

@@ -1,5 +1,11 @@
 <header class="app-header">
-  <h1>Steel Trade Monitor</h1>
+  <a class="brand" routerLink="/dashboard">
+    <span class="brand__mark" aria-hidden="true">ST</span>
+    <span class="brand__text">
+      <span class="brand__name">Steel Trade Monitor</span>
+      <span class="brand__sub">comércio exterior de aço · Comex Stat/MDIC</span>
+    </span>
+  </a>
   <nav class="app-nav" aria-label="Menu principal">
     <a routerLink="/dashboard" routerLinkActive="app-nav__link--ativo" class="app-nav__link">Dashboard</a>
     <a routerLink="/explorer" routerLinkActive="app-nav__link--ativo" class="app-nav__link">Trade Explorer</a>
@@ -11,3 +17,8 @@
 <main>
   <router-outlet />
 </main>
+
+<footer class="app-footer">
+  <span>Dados públicos do <a href="https://comexstat.mdic.gov.br" target="_blank" rel="noopener">Comex Stat / MDIC</a> · atualização diária automática</span>
+  <a href="https://github.com/LealDev/steel-trade-monitor" target="_blank" rel="noopener">GitHub ↗</a>
+</footer>

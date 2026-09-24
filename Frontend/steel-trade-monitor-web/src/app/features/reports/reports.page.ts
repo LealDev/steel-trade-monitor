@@ -59,30 +59,73 @@ import { Component, computed, signal } from '@angular/core';
     </section>
   `,
   styles: `
-    .reports { padding: 1.5rem; }
-    .reports h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
-    .reports__sub { margin: 0 0 1rem; color: #6b7280; font-size: 0.9rem; max-width: 42rem; }
+    .reports { padding: 1.5rem 1.75rem 2rem; }
+    .reports h2 {
+      margin: 0 0 0.25rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .reports__sub { margin: 0 0 1rem; color: var(--muted); font-size: 0.88rem; max-width: 44rem; }
     .filtros {
-      display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem;
-      padding: 0.9rem 1rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #fafafa;
+      display: flex; gap: 1.1rem; flex-wrap: wrap; margin-bottom: 1.4rem;
+      padding: 1rem 1.2rem; border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, var(--surface-2), var(--surface));
+      animation: rise-in 0.45s ease backwards;
     }
     .filtros label {
-      display: flex; flex-direction: column; gap: 0.25rem;
-      font-size: 0.78rem; color: #4b5563; font-weight: 600;
+      display: flex; flex-direction: column; gap: 0.3rem;
+      font-family: var(--font-display);
+      font-size: 0.68rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--muted);
     }
     .filtros select, .filtros input {
-      font: inherit; padding: 0.35rem 0.5rem; border: 1px solid #d1d5db;
-      border-radius: 6px; background: #fff; min-width: 10rem;
+      font: 400 0.9rem var(--font-body);
+      color: var(--text);
+      padding: 0.42rem 0.6rem; border: 1px solid var(--border);
+      border-radius: 6px; background: var(--bg); min-width: 11rem;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .filtros select:focus, .filtros input:focus {
+      outline: none;
+      border-color: var(--molten);
+      box-shadow: 0 0 0 3px var(--molten-soft);
     }
     .botao-download {
-      display: inline-block; padding: 0.55rem 1.2rem; border-radius: 6px;
-      background: #1d4ed8; color: #fff; text-decoration: none; font-weight: 600;
+      display: inline-block; padding: 0.62rem 1.5rem; border-radius: 8px;
+      background: linear-gradient(145deg, var(--molten), #d95c0e);
+      color: #140901; text-decoration: none;
+      font-family: var(--font-display);
+      font-weight: 700; font-size: 0.86rem;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      box-shadow: 0 0 20px rgba(255, 125, 38, 0.25);
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
-    .botao-download:hover { background: #1e40af; }
-    .conteudo-arquivo { margin-top: 1.5rem; color: #4b5563; font-size: 0.9rem; }
-    .conteudo-arquivo h3 { font-size: 0.95rem; margin: 0 0 0.5rem; color: #111827; }
+    .botao-download:hover {
+      box-shadow: 0 0 32px rgba(255, 125, 38, 0.45);
+      transform: translateY(-1px);
+    }
+    .conteudo-arquivo {
+      margin-top: 1.6rem; color: var(--muted); font-size: 0.88rem;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); padding: 1.1rem 1.3rem; max-width: 44rem;
+      animation: rise-in 0.5s ease 0.1s backwards;
+    }
+    .conteudo-arquivo h3 {
+      font-size: 0.82rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      margin: 0 0 0.6rem; color: var(--text);
+    }
+    .conteudo-arquivo ul { margin: 0; padding-left: 1.1rem; }
+    .conteudo-arquivo li { padding: 0.12rem 0; }
     .conteudo-arquivo code {
-      background: #f3f4f6; padding: 0.05rem 0.35rem; border-radius: 4px; font-size: 0.85em;
+      font-family: var(--font-mono);
+      color: var(--ember);
+      background: var(--surface-2);
+      padding: 0.08rem 0.4rem; border-radius: 4px; font-size: 0.84em;
     }
   `,
 })

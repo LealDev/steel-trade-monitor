@@ -10,6 +10,7 @@ import { Chart } from 'chart.js/auto';
 
 import { TimeSeriesPoint } from '../../../../core/models/time-series-point.model';
 import { serieDePreco } from '../../dashboard.metrics';
+import { TEMA_GRAFICO } from '../trade-volume-chart/trade-volume-chart';
 
 /**
  * Preço médio por tonelada mês a mês (US$/t = FOB ÷ toneladas), com a
@@ -26,8 +27,12 @@ import { serieDePreco } from '../../dashboard.metrics';
   styles: `
     .chart-wrapper {
       position: relative;
-      height: 240px;
+      height: 260px;
       margin-top: 1rem;
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
     }
   `,
 })
@@ -55,15 +60,16 @@ export class UnitPriceChart implements OnDestroy {
             {
               label: 'Preço do mês (US$/t)',
               data: precos.map(p => p.usdPorTonelada),
-              borderColor: '#0f766e',
-              backgroundColor: 'rgba(15, 118, 110, 0.08)',
+              borderColor: '#ffb020',
+              backgroundColor: 'rgba(255, 176, 32, 0.1)',
               fill: true,
               tension: 0.25,
+              pointRadius: 2.5,
             },
             {
               label: 'Média do período (US$/t)',
               data: precos.map(() => mediaPeriodo),
-              borderColor: '#9ca3af',
+              borderColor: '#5c6a79',
               borderDash: [6, 6],
               pointRadius: 0,
               fill: false,
@@ -78,19 +84,28 @@ export class UnitPriceChart implements OnDestroy {
             title: {
               display: true,
               text: 'Preço médio por tonelada - quanto o mercado pagou pelo aço brasileiro',
-              font: { size: 15, weight: 600 },
+              color: TEMA_GRAFICO.titulo,
+              font: { family: "'Saira', sans-serif", size: 15, weight: 600 },
               padding: { bottom: 2 },
             },
             subtitle: {
               display: true,
               text: 'US$/t = valor FOB do mês ÷ toneladas do mês · acima da linha tracejada: melhor que a média do período',
-              color: '#6b7280',
-              padding: { bottom: 12 },
+              color: TEMA_GRAFICO.subtitulo,
+              padding: { bottom: 14 },
             },
+            legend: { labels: { color: TEMA_GRAFICO.ticks, boxWidth: 24, boxHeight: 2 } },
+            tooltip: TEMA_GRAFICO.tooltip,
           },
           scales: {
+            x: {
+              ticks: { color: TEMA_GRAFICO.ticks },
+              grid: { color: TEMA_GRAFICO.grid },
+            },
             y: {
-              title: { display: true, text: 'dólares por tonelada (US$/t)' },
+              title: { display: true, text: 'dólares por tonelada (US$/t)', color: TEMA_GRAFICO.subtitulo },
+              ticks: { color: TEMA_GRAFICO.ticks },
+              grid: { color: TEMA_GRAFICO.grid },
             },
           },
         },

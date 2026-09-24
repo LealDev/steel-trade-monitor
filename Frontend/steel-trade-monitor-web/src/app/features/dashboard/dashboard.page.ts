@@ -104,58 +104,86 @@ type EstadoSerie = 'carregando' | 'pronto' | 'vazio' | 'erro';
   `,
   styles: `
     .dashboard {
-      padding: 1.5rem;
+      padding: 1.5rem 1.75rem 2rem;
     }
     .dashboard__header h2 {
-      margin: 0 0 0.25rem;
-      font-size: 1.15rem;
+      margin: 0 0 0.35rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       display: flex;
       align-items: baseline;
-      gap: 0.75rem;
+      gap: 0.85rem;
       flex-wrap: wrap;
     }
     .dashboard__periodo {
-      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
       font-weight: 500;
-      color: #4b5563;
-      background: #f3f4f6;
-      border: 1px solid #e5e7eb;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--ember);
+      background: var(--warn-soft);
+      border: 1px solid transparent;
       border-radius: 999px;
-      padding: 0.15rem 0.6rem;
+      padding: 0.18rem 0.7rem;
       white-space: nowrap;
     }
     .dashboard__badges {
       display: flex;
       gap: 0.5rem;
       flex-wrap: wrap;
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
     }
     .dashboard__kpis {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 0.75rem;
-      margin-bottom: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 1.1rem;
+    }
+    .dashboard__kpis app-kpi-card {
+      animation: rise-in 0.45s ease backwards;
+    }
+    .dashboard__kpis app-kpi-card:nth-child(2) { animation-delay: 0.06s; }
+    .dashboard__kpis app-kpi-card:nth-child(3) { animation-delay: 0.12s; }
+    .dashboard__kpis app-kpi-card:nth-child(4) { animation-delay: 0.18s; }
+    app-trade-volume-chart, app-unit-price-chart {
+      display: block;
+      animation: rise-in 0.5s ease 0.2s backwards;
     }
     .status {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
       font-weight: 600;
     }
-    .status--up { color: #15803d; }
-    .status--down { color: #b91c1c; }
-    .status--loading { color: #6b7280; }
+    .status--up { color: var(--ok); }
+    .status--down { color: var(--err); }
+    .status--loading { color: var(--faint); }
+    .dashboard__header p { color: var(--muted); font-size: 0.85rem; margin: 0 0 0.6rem; }
     .placeholder {
-      padding: 2.5rem 1.5rem;
-      border: 1px dashed #d1d5db;
-      border-radius: 8px;
-      color: #374151;
+      padding: 3rem 1.5rem;
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--muted);
       text-align: center;
     }
+    .placeholder code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      color: var(--ember);
+      background: var(--surface-2);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
     .placeholder--skeleton {
-      color: #6b7280;
+      color: var(--faint);
       animation: pulse 1.2s ease-in-out infinite;
     }
     .placeholder--erro {
-      border-color: #fca5a5;
-      color: #b91c1c;
+      border-color: var(--err);
+      color: var(--err);
     }
     @keyframes pulse {
       50% { opacity: 0.45; }

@@ -21,6 +21,6 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Steel Trade Monitor');
+    expect(compiled.querySelector('.brand__name')?.textContent).toContain('Steel Trade Monitor');
   });
 });

@@ -1,1 +1,104 @@
-/* You can add global styles to this file, and also import other style files */
+/* ============================================================
+   Steel Trade Monitor — tema "terminal industrial"
+   Gunmetal (aço frio) + laranja incandescente (aço fundido).
+   ============================================================ */
+
+:root {
+  color-scheme: dark;
+
+  /* superfícies */
+  --bg: #0f1317;
+  --surface: #171e25;
+  --surface-2: #1e2731;
+  --border: #2b3642;
+  --border-strong: #3d4a59;
+
+  /* texto */
+  --text: #e9eef3;
+  --muted: #93a1b0;
+  --faint: #5c6a79;
+
+  /* a assinatura: aço fundido */
+  --molten: #ff7d26;
+  --molten-soft: rgba(255, 125, 38, 0.14);
+  --ember: #ffb020;
+  --steel: #6aa9e9;
+
+  /* semânticos */
+  --ok: #42d392;
+  --ok-soft: rgba(66, 211, 146, 0.12);
+  --err: #ff6161;
+  --err-soft: rgba(255, 97, 97, 0.12);
+  --warn: #ffb020;
+  --warn-soft: rgba(255, 176, 32, 0.12);
+
+  --radius: 10px;
+  --font-display: 'Saira', 'Archivo', sans-serif;
+  --font-body: 'Archivo', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--text);
+  background-color: var(--bg);
+  /* papel milimétrico de engenharia + brasa difusa no horizonte */
+  background-image:
+    radial-gradient(1200px 400px at 15% -5%, rgba(255, 125, 38, 0.06), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 32px);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+}
+
+::selection {
+  background: var(--molten);
+  color: #140901;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 6px;
+  border: 2px solid var(--bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* entrada suave dos blocos de conteúdo (usada pelas páginas) */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

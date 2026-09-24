@@ -1,35 +1,165 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
-  gap: 2rem;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  gap: 2.5rem;
+  padding: 0.7rem 1.75rem;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
 
-  h1 {
-    margin: 0;
-    font-size: 1.25rem;
+  // a assinatura: aresta de aço fundido no topo
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--molten), var(--ember) 35%, transparent 80%);
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+
+  &__mark {
+    display: grid;
+    place-items: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 8px;
+    background: linear-gradient(145deg, var(--molten), #c94f08);
+    color: #140901;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    box-shadow: 0 0 18px rgba(255, 125, 38, 0.35);
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+  }
+
+  &__name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.02rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--text);
+  }
+
+  &__sub {
+    font-size: 0.68rem;
+    color: var(--faint);
+    letter-spacing: 0.04em;
   }
 }
 
 .app-nav {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.35rem;
+  margin-left: auto;
 
   &__link {
-    padding: 0.35rem 0.8rem;
-    border-radius: 6px;
+    position: relative;
+    padding: 0.5rem 0.9rem;
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
     text-decoration: none;
-    color: #4b5563;
-    font-size: 0.9rem;
-    font-weight: 500;
+    color: var(--muted);
+    border-radius: 6px;
+    transition: color 0.15s ease, background 0.15s ease;
 
     &:hover {
-      background: #f3f4f6;
+      color: var(--text);
+      background: var(--surface-2);
+    }
+
+    // trilho incandescente sob o item ativo
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0.9rem;
+      right: 0.9rem;
+      bottom: 0.15rem;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--molten);
+      box-shadow: 0 0 8px rgba(255, 125, 38, 0.7);
+      opacity: 0;
+      transform: scaleX(0.4);
+      transition: opacity 0.2s ease, transform 0.2s ease;
     }
 
     &--ativo {
-      background: #eff6ff;
-      color: #1d4ed8;
+      color: var(--molten);
+
+      &::after {
+        opacity: 1;
+        transform: scaleX(1);
+      }
     }
+  }
+}
+
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.app-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.1rem 1.75rem 1.4rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--faint);
+
+  a {
+    color: var(--muted);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--molten);
+    }
+  }
+}
+
+@media (max-width: 760px) {
+  .app-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .app-nav {
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+
+  .brand__sub {
+    display: none;
   }
 }
