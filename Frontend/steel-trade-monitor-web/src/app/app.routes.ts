@@ -12,4 +12,14 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/trade-explorer/trade-explorer.page').then(m => m.TradeExplorerPage),
   },
+  {
+    path: 'status',
+    loadComponent: () =>
+      import('./features/status/status.page').then(m => m.StatusPage),
+  },
+  {
+    path: 'reports',
+    loadComponent: () =>
+      import('./features/reports/reports.page').then(m => m.ReportsPage),
+  },
 ];

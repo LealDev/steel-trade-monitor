@@ -5,8 +5,12 @@ import java.util.List;
 import com.steeltrade.ingestion.core.IngestionLog;
 import com.steeltrade.ingestion.core.IngestionLogRepository;
 import com.steeltrade.ingestion.core.StatusExecucao;
+import com.steeltrade.shared.pagination.PageResponse;
+import com.steeltrade.status.dto.ExecutionResponse;
 import com.steeltrade.status.dto.SourceFreshnessResponse;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +29,22 @@ public class DataFreshnessServiceImpl implements DataFreshnessService {
         return ingestionLogRepository.listarFontes().stream()
                 .map(this::freshnessDaFonte)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<ExecutionResponse> listarExecucoes(int page, int size) {
+        var pagina = ingestionLogRepository.findAll(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "iniciadoEm")));
+        return PageResponse.de(pagina, execucao -> new ExecutionResponse(
+                execucao.getId(),
+                execucao.getFonte(),
+                execucao.getStatus(),
+                execucao.getIniciadoEm(),
+                execucao.getFinalizadoEm(),
+                execucao.getPeriodoReferencia(),
+                execucao.getRegistrosGravados(),
+                execucao.getMensagem()));
     }
 
     private SourceFreshnessResponse freshnessDaFonte(String fonte) {

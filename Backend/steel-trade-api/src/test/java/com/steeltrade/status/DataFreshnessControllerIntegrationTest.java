@@ -65,4 +65,27 @@ class DataFreshnessControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
+
+    @Test
+    void historicoDeExecucoesEPaginadoDaMaisRecenteParaAMaisAntiga() throws Exception {
+        for (int i = 0; i < 3; i++) {
+            var execucao = IngestionLog.iniciar("COMEXSTAT", "EXPORT cap72 2026-0" + (i + 1), BASE.plusHours(i));
+            execucao.finalizar(StatusExecucao.SUCESSO, 100 + i, 100 + i, null, BASE.plusHours(i).plusMinutes(2));
+            ingestionLogRepository.save(execucao);
+        }
+
+        mockMvc.perform(get("/v1/status/executions").param("page", "0").param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                // a mais recente (BASE+2h) vem primeiro
+                .andExpect(jsonPath("$.content[0].periodoReferencia").value("EXPORT cap72 2026-03"))
+                .andExpect(jsonPath("$.content[0].registrosGravados").value(102));
+
+        mockMvc.perform(get("/v1/status/executions").param("page", "1").param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].periodoReferencia").value("EXPORT cap72 2026-01"));
+    }
 }

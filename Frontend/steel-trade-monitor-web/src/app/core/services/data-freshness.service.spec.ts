@@ -42,4 +42,13 @@ describe('DataFreshnessService', () => {
 
     expect(recebido).toEqual(resposta);
   });
+
+  it('consulta o histórico de execuções paginado', () => {
+    service.getExecutions(2, 15).subscribe();
+
+    const req = httpMock.expectOne(r => r.url === '/api/v1/status/executions');
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('size')).toBe('15');
+    req.flush({ content: [], page: 2, size: 15, totalElements: 0, totalPages: 0 });
+  });
 });

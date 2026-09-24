@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -84,6 +85,18 @@ class ComexStatIngestionControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].via").value("MARITIMA"))
                 .andExpect(jsonPath("$[0].kgLiquido").isNumber());
+
+        // export CSV do mesmo recorte: cabeçalho + 1 linha de dados
+        var csv = mockMvc.perform(get("/v1/export/trade.csv")
+                        .param("from", "2025-06")
+                        .param("to", "2025-06"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("steel-trade_export_cap72.csv")))
+                .andReturn().getResponse().getContentAsString();
+        org.assertj.core.api.Assertions.assertThat(csv)
+                .contains("periodo;fluxo;capitulo_ncm;kg_liquido;valor_fob_usd;preco_medio_usd_t")
+                .contains("2025-06;EXPORT;72;");
     }
 
     @Test
