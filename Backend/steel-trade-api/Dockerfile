@@ -13,7 +13,8 @@ RUN ./mvnw -q package -DskipTests
 
 # Etapa 2: runtime enxuto, só o JRE, sem root
 FROM eclipse-temurin:25-jre
-RUN useradd --system --uid 1000 --no-create-home app
+# uid alto para não colidir com usuários da imagem base (1000 = ubuntu)
+RUN useradd --system --uid 10001 --no-create-home app
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 USER app
