@@ -5,6 +5,7 @@ import java.time.OffsetDateTime;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -37,6 +39,26 @@ public class GlobalExceptionHandler {
                                                              HttpServletRequest request) {
         String detalhes = ex.getBindingResult().getFieldErrors().stream()
                 .map(erro -> erro.getField() + ": " + erro.getDefaultMessage())
+                .collect(Collectors.joining("; "));
+        return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", detalhes, request);
+    }
+
+    /** Constraints em @RequestParam (@Min/@Max via @Validated) são 400, não 500. */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleConstraintViolation(ConstraintViolationException ex,
+                                                                      HttpServletRequest request) {
+        String detalhes = ex.getConstraintViolations().stream()
+                .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                .collect(Collectors.joining("; "));
+        return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", detalhes, request);
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiErrorResponse> handleParamValidation(HandlerMethodValidationException ex,
+                                                                  HttpServletRequest request) {
+        String detalhes = ex.getParameterValidationResults().stream()
+                .flatMap(resultado -> resultado.getResolvableErrors().stream())
+                .map(erro -> String.valueOf(erro.getDefaultMessage()))
                 .collect(Collectors.joining("; "));
         return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", detalhes, request);
     }

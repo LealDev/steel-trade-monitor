@@ -1,0 +1,17 @@
+# Vigilância contínua de CVEs e atualizações nas três superfícies de dependências.
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /Backend/steel-trade-api
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: /Frontend/steel-trade-monitor-web
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

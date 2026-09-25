@@ -1,5 +1,8 @@
 package com.steeltrade.ingestion.comexstat;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+
 import com.steeltrade.ingestion.comexstat.dto.IngestionRunRequest;
 import com.steeltrade.ingestion.comexstat.dto.PipelineRunResponse;
 import com.steeltrade.ingestion.core.IngestionRunner;
@@ -43,7 +46,7 @@ public class ComexStatIngestionController {
     public ResponseEntity<PipelineRunResponse> executar(
             @Valid @RequestBody IngestionRunRequest request,
             @RequestHeader(name = HEADER_TOKEN, required = false) String token) {
-        if (StringUtils.hasText(tokenConfigurado) && !tokenConfigurado.equals(token)) {
+        if (StringUtils.hasText(tokenConfigurado) && !tokenValido(token)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         var resultado = ingestionRunner.executarComexStat(request.fluxoOuPadrao(),
@@ -52,5 +55,15 @@ public class ComexStatIngestionController {
                 ? HttpStatus.BAD_GATEWAY
                 : HttpStatus.CREATED;
         return ResponseEntity.status(status).body(resultado);
+    }
+
+    /** Comparação em tempo constante: equals retornaria no primeiro byte divergente. */
+    private boolean tokenValido(String token) {
+        if (token == null) {
+            return false;
+        }
+        return MessageDigest.isEqual(
+                tokenConfigurado.getBytes(StandardCharsets.UTF_8),
+                token.getBytes(StandardCharsets.UTF_8));
     }
 }

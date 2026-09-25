@@ -143,6 +143,24 @@ class ComexStatIngestionControllerIntegrationTest {
     }
 
     @Test
+    void rotaDeIngestaoLimitaAJanelaEm24Meses() throws Exception {
+        mockMvc.perform(post("/v1/ingestion/comexstat/runs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"from\":\"2020-01\",\"to\":\"2026-08\",\"chapter\":72}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value(
+                        org.hamcrest.Matchers.containsString("24 meses")));
+    }
+
+    @Test
+    void parametroDeConsultaInvalidoDevolve400ENao500() throws Exception {
+        mockMvc.perform(get("/v1/trade/top-countries").param("limit", "999"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
     void fonteExternaRespondendoErroDevolve502ComDeadLetterRegistrada() throws Exception {
         when(gateway.buscar(any(), any(), any(), anyInt())).thenReturn(new ComexStatRawResponse(
                 "/general?language=pt", "{\"flow\":\"export\"}", 429, "{\"error\":{\"code\":429}}"));
